@@ -2,7 +2,7 @@
 
 namespace ActiveMQBinding.Tests.Assets;
 
-internal class TextMessage : ITextMessage
+internal sealed class TextMessage : ITextMessage
 {
     public string Text { get; set; } = default!;
     public IPrimitiveMap Properties { get; } = default!;

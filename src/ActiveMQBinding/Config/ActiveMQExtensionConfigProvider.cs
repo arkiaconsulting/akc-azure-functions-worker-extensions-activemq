@@ -1,7 +1,6 @@
 ﻿using ActiveMQBinding.Binding;
 using Apache.NMS;
 using Apache.NMS.AMQP;
-using Apache.NMS.AMQP.Message;
 using Apache.NMS.Policies;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Host.Config;
@@ -27,13 +26,6 @@ namespace ActiveMQBinding.Config
         public void Initialize(ExtensionConfigContext context)
         {
             _logger.LogDebug("Initializing ActiveMQExtensionConfigProvider");
-            //context.AddOpenConverter<NmsTextMessage, OpenType.Poco>(typeof(NmsTextMessageToPocoConverter<>));
-            context.AddConverter<NmsTextMessage, ITextMessage>((source, attribute) =>
-            {
-                _logger.LogDebug("Converting NmsTextMessage to ITextMessage");
-
-                return source;
-            });
 
             var triggerRule = context.AddBindingRule<ActiveMQTriggerAttribute>();
             triggerRule.BindToTrigger(new ActiveMQListenerTriggerBindingProvider(this, _logger));

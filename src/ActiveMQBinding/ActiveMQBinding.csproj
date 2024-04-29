@@ -17,6 +17,7 @@
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Core" Version="1.18.0" />
 		<PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.39" />
 		<PackageReference Include="Apache.NMS.AMQP" Version="2.2.0" />
+		<PackageReference Include="System.Threading.Channels" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
