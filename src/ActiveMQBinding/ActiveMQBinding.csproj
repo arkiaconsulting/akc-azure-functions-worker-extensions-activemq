@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<!--<Nullable>enable</Nullable>-->
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageId>ActiveMQListener</PackageId>
+		<Version>1.0.29</Version>
+		<Authors>Louis GERARD</Authors>
+		<Company>Arkia Consulting</Company>
+		<IncludeSymbols>True</IncludeSymbols>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Azure.Functions.Worker.Core" Version="1.18.0" />
+		<PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.39" />
+		<PackageReference Include="Apache.NMS.AMQP" Version="2.2.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>ActiveMQBinding.Tests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+</Project>

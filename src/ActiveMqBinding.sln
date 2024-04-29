@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQBinding", "ActiveMQBinding\ActiveMQBinding.csproj", "{62D64403-4E38-4869-963A-2F402E9A7C22}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.WorkerBinding", "ActiveMQ.WorkerBinding\ActiveMQ.WorkerBinding.csproj", "{705B4269-4EF3-40EF-BFBE-8A78F409FE67}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQFunction", "ActiveMQFunction\ActiveMQFunction.csproj", "{E4C84FFE-C684-473C-BD52-531434ECFFA4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{49870129-2CD0-4D30-B8DA-D5AFB3E03CEA}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yaml = docker-compose.yaml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQBinding.Tests", "ActiveMQBinding.Tests\ActiveMQBinding.Tests.csproj", "{64A011F2-4811-4901-B3BC-66106EB0BE58}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQFunction.InProcess", "ActiveMQFunction.InProcess\ActiveMQFunction.InProcess.csproj", "{5A99A121-B551-4467-ADED-76A8D1897565}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{62D64403-4E38-4869-963A-2F402E9A7C22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62D64403-4E38-4869-963A-2F402E9A7C22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62D64403-4E38-4869-963A-2F402E9A7C22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62D64403-4E38-4869-963A-2F402E9A7C22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{705B4269-4EF3-40EF-BFBE-8A78F409FE67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{705B4269-4EF3-40EF-BFBE-8A78F409FE67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{705B4269-4EF3-40EF-BFBE-8A78F409FE67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{705B4269-4EF3-40EF-BFBE-8A78F409FE67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4C84FFE-C684-473C-BD52-531434ECFFA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4C84FFE-C684-473C-BD52-531434ECFFA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4C84FFE-C684-473C-BD52-531434ECFFA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4C84FFE-C684-473C-BD52-531434ECFFA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64A011F2-4811-4901-B3BC-66106EB0BE58}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64A011F2-4811-4901-B3BC-66106EB0BE58}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64A011F2-4811-4901-B3BC-66106EB0BE58}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64A011F2-4811-4901-B3BC-66106EB0BE58}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A99A121-B551-4467-ADED-76A8D1897565}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A99A121-B551-4467-ADED-76A8D1897565}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A99A121-B551-4467-ADED-76A8D1897565}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A99A121-B551-4467-ADED-76A8D1897565}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1B9BD992-16D6-41D8-A8EB-28CA1FD600ED}
+	EndGlobalSection
+EndGlobal
