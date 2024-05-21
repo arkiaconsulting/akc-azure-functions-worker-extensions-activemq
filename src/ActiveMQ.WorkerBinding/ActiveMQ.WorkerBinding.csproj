@@ -17,8 +17,8 @@
 		<Description>ActiveMQ extension for .NET isolated Azure Functions.</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<RepositoryUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/arkiaconsulting/akc-azure-functions-worker-extensions-activemq</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/arkiaconsulting/akc-azure-functions-worker-extensions-activemq</PackageProjectUrl>
 		<PackageTags>Azure WebJobs AzureFunctions ActiveMQ Isolated Akc</PackageTags>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
