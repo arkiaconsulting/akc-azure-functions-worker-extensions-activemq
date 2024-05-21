@@ -1,0 +1,81 @@
+parameters:
+  - name: previewBuild
+    type: boolean
+    default: true
+
+pr:
+  branches:
+    include:
+      - main
+
+trigger:
+  branches:
+    include:
+      - main
+
+schedules:
+  - cron: "0 0 * * SAT"
+    branches:
+      include:
+        - main
+
+variables:
+  Codeql.Enabled: true
+  # It is a release build if it is triggered by the main branch.
+  isReleaseBuild: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}
+  majorVersion: 0
+  minorVersion: 0
+  patchVersion: $[ counter(format('{0}.{1}-{2}', variables['majorVersion'], variables['minorVersion'], variables['isReleaseBuild']), 0) ]
+  fullVersion: $[ format('{0}.{1}.{2}', variables['majorVersion'], variables['minorVersion'], variables['patchVersion']) ]
+  ${{ if parameters['previewBuild'] }}:
+    releaseVersion: $[ format('{0}-{1}', variables['fullVersion'], 'preview') ]
+  ${{ else }}:
+    releaseVersion: fullVersion
+
+jobs:
+  - job: Extension
+    displayName: dotnet and dotnet-isolated NuGet packages
+    steps:
+      - task: UseDotNet@2
+        displayName: Install .NET SDK
+        inputs:
+          packageType: sdk
+          version: 6.x
+          performMultiLevelLookup: true
+
+      - task: DotNetCoreCLI@2
+        displayName: Build Akc.Azure.WebJobs.Extensions.ActiveMQ Release
+        condition: eq(variables.isReleaseBuild, 'True')
+        inputs:
+          command: build
+          arguments: $(Build.SourcesDirectory)/src/ActiveMQBinding/ActiveMQBinding.csproj --configuration Release -property:Version=$(releaseVersion)
+
+      - task: DotNetCoreCLI@2
+        displayName: Build Akc.Azure.Functions.Worker.Extensions.ActiveMQ Release
+        condition: eq(variables.isReleaseBuild, 'True')
+        inputs:
+          command: build
+          arguments: $(Build.SourcesDirectory)/src/ActiveMQ.WorkerBinding/ActiveMQ.WorkerBinding.csproj --configuration Release -property:Version=$(releaseVersion)
+
+      - task: DotNetCoreCLI@2
+        displayName: Pack Akc.Azure.WebJobs.Extensions.ActiveMQ Release
+        condition: eq(variables.isReleaseBuild, 'True')
+        inputs:
+          command: custom
+          custom: pack
+          arguments: $(Build.SourcesDirectory)/src/src/ActiveMQBinding/ActiveMQBinding.csproj --configuration Release --no-build -property:Version=$(releaseVersion) --output $(Build.ArtifactStagingDirectory)/dotnet/$(releaseVersion)
+
+      - task: DotNetCoreCLI@2
+        displayName: Pack Akc.Azure.Functions.Worker.Extensions.ActiveMQ Release
+        condition: eq(variables.isReleaseBuild, 'True')
+        inputs:
+          command: custom
+          custom: pack
+          arguments: $(Build.SourcesDirectory)/src/ActiveMQ.WorkerBinding/ActiveMQ.WorkerBinding.csproj --configuration Release --no-build -property:Version=$(releaseVersion) --output $(Build.ArtifactStagingDirectory)/dotnet/$(releaseVersion)
+
+      - task: PublishBuildArtifacts@1
+        displayName: Publish Extension
+        condition: eq(variables.isReleaseBuild, 'True')
+        inputs:
+          pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          artifactName: 'drop'
