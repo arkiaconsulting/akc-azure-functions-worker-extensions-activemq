@@ -19,7 +19,7 @@
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<RepositoryUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</PackageProjectUrl>
-		<PackageTags>Azure WebJobs AzureFunctions ActiveMQ Isolated</PackageTags>
+		<PackageTags>Azure WebJobs AzureFunctions ActiveMQ Isolated Akc</PackageTags>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
