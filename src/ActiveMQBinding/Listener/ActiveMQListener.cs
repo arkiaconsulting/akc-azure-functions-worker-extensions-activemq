@@ -1,5 +1,5 @@
-﻿using ActiveMQBinding.Context;
-using ActiveMQBinding.Triggers;
+﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Context;
+using Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers;
 using Apache.NMS;
 using Apache.NMS.AMQP.Message;
 using Apache.NMS.Util;
@@ -10,7 +10,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ActiveMQBinding.Listener
+namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
 {
     internal sealed class ActiveMQListener : IListener
     {
@@ -57,7 +57,7 @@ namespace ActiveMQBinding.Listener
             };
             _triggerContext.Connection.ConnectionInterruptedListener += () =>
             {
-                _logger.LogInformation("ActiveMQ Connection Interrupted");
+                _logger.LogWarning("ActiveMQ Connection Interrupted");
                 _logger.LogInformation("Cancelling listening loop");
 
                 _cts.Cancel();
@@ -65,7 +65,13 @@ namespace ActiveMQBinding.Listener
             };
 
             var session = await _triggerContext.Connection.CreateSessionAsync(AcknowledgementMode.Transactional);
-            var queueName = _triggerContext.ActiveMQTriggerAttribute.QueueName;
+
+            var queueName = _triggerContext.ActiveMQTriggerAttribute.ResolvedQueueName;
+            if (string.IsNullOrWhiteSpace(queueName))
+            {
+                throw new InvalidOperationException("The name of the queue could not be found");
+            }
+
             var queue = (IQueue)SessionUtil.GetDestination(session, queueName, DestinationType.Queue);
             var consumer = await session.CreateConsumerAsync(queue);
 
@@ -77,7 +83,7 @@ namespace ActiveMQBinding.Listener
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogDebug("Stoping ActiveMQ listener");
+            _logger.LogInformation("Stoping ActiveMQ listener");
 
             Cancel();
 
@@ -102,12 +108,11 @@ namespace ActiveMQBinding.Listener
         {
             var listeningData = (ListeningLoopData)parameter;
 
-            _logger.LogDebug("Start consuming queue '{QueueName}'", listeningData.Queue.QueueName);
+            _logger.LogInformation("Start consuming queue '{QueueName}'", listeningData.Queue.QueueName);
 
             while (!listeningData.CancellationToken.IsCancellationRequested)
             {
                 var message = (NmsTextMessage)listeningData.Consumer.Receive(TimeSpan.FromMilliseconds(500));
-
                 if (message == null)
                 {
                     continue;
@@ -118,7 +123,7 @@ namespace ActiveMQBinding.Listener
                 _functionExecutor.Flush();
             }
 
-            _logger.LogDebug("Listener loop has ended");
+            _logger.LogWarning("Listener loop has ended");
         }
 
         private sealed class ListeningLoopData

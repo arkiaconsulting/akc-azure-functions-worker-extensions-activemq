@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace ActiveMQBinding.Triggers
+namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
 {
     internal sealed class SingleItemFunctionExecutor : IDisposable
     {
@@ -121,7 +121,7 @@ namespace ActiveMQBinding.Triggers
             {
                 var triggerData = new TriggeredFunctionData
                 {
-                    TriggerValue = message
+                    TriggerValue = message,
                 };
 
                 try
@@ -135,10 +135,8 @@ namespace ActiveMQBinding.Triggers
 
                     await _session.CommitAsync();
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    _logger.LogError(e, "Function execution failed");
-
                     await _session.RollbackAsync();
 
                     throw;

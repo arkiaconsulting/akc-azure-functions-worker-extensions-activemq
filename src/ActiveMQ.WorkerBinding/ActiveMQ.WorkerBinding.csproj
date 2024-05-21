@@ -1,12 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<OutputType>Library</OutputType>
+		<AssemblyName>Akc.Azure.Functions.Worker.Extensions.ActiveMQ</AssemblyName>
+		<RootNamespace>Akc.Azure.Functions.Worker.Extensions.ActiveMQ</RootNamespace>
+		<Version>0.0.0</Version>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PackageId>Akc.Azure.Functions.Worker.Extensions.ActiveMQ</PackageId>
+		<Authors>Arkia Consulting</Authors>
+		<Company>Arkia Consulting</Company>
+		<Copyright>© Arkia Consulting. All rights reserved.</Copyright>
+
+		<Product>ActiveMQ extension for .NET isolated Azure Functions.</Product>
+		<Description>ActiveMQ extension for .NET isolated Azure Functions.</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<RepositoryUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</PackageProjectUrl>
+		<PackageTags>Azure WebJobs AzureFunctions ActiveMQ Isolated</PackageTags>
+
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<DebugType>embedded</DebugType>
+
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions" Version="1.3.0" />
 	</ItemGroup>
-	
+
+	<ItemGroup>
+		<AssemblyAttribute Include="Microsoft.Azure.Functions.Worker.Extensions.Abstractions.ExtensionInformationAttribute">
+			<_Parameter1>Akc.Azure.WebJobs.Extensions.ActiveMQ</_Parameter1>
+			<_Parameter2>$(Version)</_Parameter2>
+		</AssemblyAttribute>
+	</ItemGroup>
+
 </Project>

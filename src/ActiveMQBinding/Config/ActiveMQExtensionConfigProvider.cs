@@ -1,25 +1,25 @@
-﻿using ActiveMQBinding.Binding;
+﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Binding;
 using Apache.NMS;
 using Apache.NMS.AMQP;
 using Apache.NMS.Policies;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Description;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Logging;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
-namespace ActiveMQBinding.Config
+namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Config
 {
     [Extension("ActiveMQ")]
     internal class ActiveMQExtensionConfigProvider : IExtensionConfigProvider
     {
-        private readonly IConfiguration _configuration;
+        private readonly INameResolver _nameResolver;
         private readonly ILogger _logger;
 
-        public ActiveMQExtensionConfigProvider(IConfiguration configuration, ILoggerFactory loggerFactory)
+        public ActiveMQExtensionConfigProvider(INameResolver nameResolver, ILoggerFactory loggerFactory)
         {
-            _configuration = configuration;
+            _nameResolver = nameResolver;
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("ActiveMQ"));
         }
 
@@ -43,13 +43,15 @@ namespace ActiveMQBinding.Config
                 UseExponentialBackOff = true
             };
 
-            var connectionUrl = GetValueOrSecretFromConfig(triggerAttribute.Connection);
-            var userName = GetValueOrSecretFromConfig(triggerAttribute.UserName);
-            var password = GetValueOrSecretFromConfig(triggerAttribute.Password);
+            var connectionUrl = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.Connection, nameof(triggerAttribute.Connection));
+            var userName = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.UserName, nameof(triggerAttribute.UserName));
+            var password = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.Password, nameof(triggerAttribute.Password));
 
             var connectionFactory = new NmsConnectionFactory(CreateProviderUri(connectionUrl));
             var connection = (NmsConnection)await connectionFactory.CreateConnectionAsync(userName, password);
             connection.RedeliveryPolicy = policy;
+
+            triggerAttribute.ResolvedQueueName = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.QueueName, nameof(triggerAttribute.QueueName));
 
             try
             {
@@ -62,20 +64,11 @@ namespace ActiveMQBinding.Config
             catch (System.Exception e)
             {
                 _logger.LogError(e, "Could not start ActiveMQ connection");
+
                 throw;
             }
 
             return connection;
-        }
-
-        private string GetValueOrSecretFromConfig(string value)
-        {
-            if (value.StartsWith("%") && value.EndsWith("%"))
-            {
-                return _configuration[value.TrimStart().TrimEnd()];
-            }
-
-            return value;
         }
 
         private static string CreateProviderUri(string connectionUrl) =>

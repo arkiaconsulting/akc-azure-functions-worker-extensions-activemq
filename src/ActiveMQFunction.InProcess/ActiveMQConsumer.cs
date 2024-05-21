@@ -1,4 +1,4 @@
-﻿using ActiveMQBinding;
+﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 
@@ -13,7 +13,7 @@ public class ActiveMQConsumer
 
     [FunctionName("ActiveMQConsumer")]
     public void HandleRedisMessage(
-        [ActiveMQTrigger("amqp://localhost:5672/", "Processing.Status", "artemis", "artemis")] MyPoco poco)
+        [ActiveMQTrigger("%ActiveMQ:Endpoint%", "%ActiveMQ:ProcessingStatusQueue%", "%ActiveMQ:UserName%", "%ActiveMQ:Password%")] MyPoco poco)
     {
         _logger.LogInformation("Message received");
         _logger.LogInformation("ID = {ID}", poco.Id);

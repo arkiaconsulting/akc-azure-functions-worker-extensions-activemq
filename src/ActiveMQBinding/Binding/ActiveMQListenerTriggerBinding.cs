@@ -1,6 +1,6 @@
-﻿using ActiveMQBinding.Context;
-using ActiveMQBinding.Listener;
-using ActiveMQBinding.ValueBinding;
+﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Context;
+using Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener;
+using Akc.Azure.WebJobs.Extensions.ActiveMQ.ValueBinding;
 using Apache.NMS;
 using Apache.NMS.AMQP.Message;
 using Microsoft.Azure.WebJobs.Host.Bindings;
@@ -10,9 +10,10 @@ using Microsoft.Azure.WebJobs.Host.Triggers;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 
-namespace ActiveMQBinding.Binding
+namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Binding
 {
     internal class ActiveMQListenerTriggerBinding : ITriggerBinding
     {
@@ -21,23 +22,22 @@ namespace ActiveMQBinding.Binding
         public IReadOnlyDictionary<string, Type> BindingDataContract { get; } = CreateBindingDataContract();
 
         private readonly ActiveMQTriggerContext _triggerContext;
-
-        private readonly Type _parameterType;
+        private readonly ParameterInfo _parameter;
         private readonly ILogger _logger;
 
-        public ActiveMQListenerTriggerBinding(ActiveMQTriggerContext triggerContext, Type parameterType, ILogger logger)
+        public ActiveMQListenerTriggerBinding(ActiveMQTriggerContext triggerContext, ParameterInfo parameter, ILogger logger)
         {
             _triggerContext = triggerContext;
-            _parameterType = parameterType;
+            _parameter = parameter;
             _logger = logger;
         }
 
         public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
         {
-            var textMessage = (NmsTextMessage)value;
-            var valueBinder = new ActiveMQTriggerValueProvider(textMessage, _parameterType, _logger);
+            var message = (NmsTextMessage)value;
+            var bindingData = CreateBindingData(message);
 
-            return Task.FromResult<ITriggerData>(new TriggerData(valueBinder, CreateBindingData(textMessage)));
+            return Task.FromResult<ITriggerData>(new TriggerData(new ActiveMQTriggerValueProvider(_parameter, message, _logger), bindingData));
         }
 
         public Task<IListener> CreateListenerAsync(ListenerFactoryContext context)
@@ -47,9 +47,12 @@ namespace ActiveMQBinding.Binding
             return Task.FromResult(listener);
         }
 
-        internal static IReadOnlyDictionary<string, object> CreateBindingData(NmsTextMessage value)
+        internal static IReadOnlyDictionary<string, object> CreateBindingData(NmsTextMessage message)
         {
-            var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase) { { nameof(value), value } };
+            var bindingData = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                [nameof(message.Text)] = message.Text,
+            };
 
             return bindingData;
         }
@@ -58,7 +61,7 @@ namespace ActiveMQBinding.Binding
         {
             var contract = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
             {
-                ["Message"] = typeof(IMessage),
+                [nameof(NmsTextMessage.Text)] = typeof(string),
             };
 
             return contract;

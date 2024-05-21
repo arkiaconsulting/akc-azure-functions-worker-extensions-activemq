@@ -2,7 +2,7 @@
 using System;
 using System.Reflection;
 
-namespace ActiveMQBinding
+namespace Akc.Azure.WebJobs.Extensions.ActiveMQ
 {
     internal static class TypeUtility
     {

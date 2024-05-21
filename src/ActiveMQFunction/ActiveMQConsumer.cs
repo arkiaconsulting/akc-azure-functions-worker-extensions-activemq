@@ -1,4 +1,4 @@
-﻿using ActiveMQ.WorkerBinding;
+﻿using Akc.Azure.Functions.Worker.Extensions.ActiveMQ;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 
@@ -12,13 +12,16 @@ public class ActiveMQConsumer
         _logger = logger;
 
     [Function("ActiveMQConsumer")]
-    public void HandleRedisMessage(
-        [ActiveMQTrigger("amqp://localhost:5672/", "Processing.Status", "artemis", "artemis")] MyPoco poco)
+    public void HandleActiveMQMessage(
+        [ActiveMQTrigger("%ActiveMQ:Endpoint%", "%ActiveMQ:ProcessingStatusQueue%", "%ActiveMQ:UserName%", "%ActiveMQ:Password%")] MyPoco message)
     {
         _logger.LogInformation("Message received");
 
-        _logger.LogInformation("Received {ID}", poco.Id);
+        _logger.LogInformation("Received {Message}", message.ToString());
     }
 }
 
-public sealed record MyPoco(string Id);
+public sealed record MyPoco(string Id)
+{
+    public override string ToString() => $"Id: {Id}";
+}

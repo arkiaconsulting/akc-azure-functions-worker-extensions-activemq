@@ -2,15 +2,34 @@
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
-		<!--<Nullable>enable</Nullable>-->
+		<AssemblyName>Akc.Azure.WebJobs.Extensions.ActiveMQ</AssemblyName>
+		<RootNamespace>Akc.Azure.WebJobs.Extensions.ActiveMQ</RootNamespace>
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<PackageId>ActiveMQListener</PackageId>
-		<Version>1.0.29</Version>
-		<Authors>Louis GERARD</Authors>
+		<Version>0.0.0</Version>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+		<PackageId>Akc.Azure.WebJobs.Extensions.ActiveMQ</PackageId>
+		<Authors>Arkia Consulting</Authors>
 		<Company>Arkia Consulting</Company>
-		<IncludeSymbols>True</IncludeSymbols>
+		<Copyright>© Arkia Consulting. All rights reserved.</Copyright>
+
+		<Product>ActiveMQ Extension for Azure Functions</Product>
+		<Description>This package contains binding extensions for ActiveMQ.</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+		<RepositoryUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/arkiaconsulting/azure-functions-activemq-extension</PackageProjectUrl>
+		<PackageTags>Azure WebJobs AzureFunctions ActiveMQ</PackageTags>
+
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<DebugType>embedded</DebugType>
+
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 	</PropertyGroup>
 
 	<ItemGroup>

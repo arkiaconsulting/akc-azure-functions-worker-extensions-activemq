@@ -1,6 +1,6 @@
 ﻿using Apache.NMS;
 
-namespace ActiveMQBinding.Context
+namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Context
 {
     internal class ActiveMQTriggerContext
     {
