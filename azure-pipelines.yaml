@@ -30,7 +30,7 @@ variables:
   ${{ if parameters['previewBuild'] }}:
     releaseVersion: $[ format('{0}-{1}', variables['fullVersion'], 'preview') ]
   ${{ else }}:
-    releaseVersion: fullVersion
+    releaseVersion: $[ format('{0}', variables['fullVersion']) ]
 
 jobs:
   - job: Extension
