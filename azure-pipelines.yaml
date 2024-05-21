@@ -63,7 +63,7 @@ jobs:
         inputs:
           command: custom
           custom: pack
-          arguments: $(Build.SourcesDirectory)/src/src/ActiveMQBinding/ActiveMQBinding.csproj --configuration Release --no-build -property:Version=$(releaseVersion) --output $(Build.ArtifactStagingDirectory)/dotnet/$(releaseVersion)
+          arguments: $(Build.SourcesDirectory)/src/ActiveMQBinding/ActiveMQBinding.csproj --configuration Release --no-build -property:Version=$(releaseVersion) --output $(Build.ArtifactStagingDirectory)/dotnet/$(releaseVersion)
 
       - task: DotNetCoreCLI@2
         displayName: Pack Akc.Azure.Functions.Worker.Extensions.ActiveMQ Release
