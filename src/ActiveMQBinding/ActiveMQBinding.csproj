@@ -30,6 +30,7 @@
 
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<PackageOutputPath>../.nupkg</PackageOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -37,12 +38,6 @@
 		<PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.39" />
 		<PackageReference Include="Apache.NMS.AMQP" Version="2.2.0" />
 		<PackageReference Include="System.Threading.Channels" Version="6.0.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-			<_Parameter1>ActiveMQBinding.Tests</_Parameter1>
-		</AssemblyAttribute>
 	</ItemGroup>
 
 </Project>

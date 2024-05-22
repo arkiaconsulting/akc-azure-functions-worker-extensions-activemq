@@ -9,7 +9,6 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
-        services.AddApplicationInsightsTelemetryWorkerService();
         services.Configure<LoggerFilterOptions>(options =>
         {
             var toRemove = options.Rules.FirstOrDefault(rule => rule.ProviderName

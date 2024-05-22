@@ -4,39 +4,39 @@ using System;
 namespace Akc.Azure.WebJobs.Extensions.ActiveMQ
 {
     /// <summary>
-    /// ActiveMQ trigger binding attribute
+    /// ActiveMQ binding attribute
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
     [Binding]
-    public class ActiveMQTriggerAttribute : Attribute
+    public sealed class ActiveMQAttribute : Attribute
     {
         /// <summary>
-        /// App setting name that contains the ActiveMQ endpoint
+        /// Endpoint in the form 'amqp://localhost:5672' (%...% placeholder supported)
         /// </summary>
         [AppSetting]
         public string Connection { get; set; }
 
         /// <summary>
-        /// App setting name that contains the ActiveMQ queue name
+        /// The name of the queue to listen to (%...% placeholder supported)
         /// </summary>
         public string QueueName { get; private set; }
 
         /// <summary>
-        /// App setting name that contains the ActiveMQ username
+        /// The username to use for authentication (%...% placeholder supported)
         /// </summary>
         [AppSetting]
         public string UserName { get; set; }
 
         /// <summary>
-        /// App setting name that contains the ActiveMQ password
+        /// The password to use for authentication (%...% placeholder supported)
         /// </summary>
         [AppSetting]
         public string Password { get; set; }
 
         /// <summary>
-        /// Initializes a new <see cref="ActiveMQTriggerAttribute"/>.
+        /// Initializes a new <see cref="ActiveMQAttribute"/>.
         /// </summary>
         /// <param name="queueName">The name of the queue to listen to (%...% placeholder supported)</param>
-        public ActiveMQTriggerAttribute(string queueName) => QueueName = queueName;
+        public ActiveMQAttribute(string queueName) => QueueName = queueName;
     }
 }

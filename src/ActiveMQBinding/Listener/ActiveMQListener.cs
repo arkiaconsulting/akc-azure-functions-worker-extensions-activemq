@@ -1,8 +1,6 @@
-﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Context;
+﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Services;
 using Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers;
 using Apache.NMS;
-using Apache.NMS.AMQP.Message;
-using Apache.NMS.Util;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
 using Microsoft.Extensions.Logging;
@@ -15,18 +13,24 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
     internal sealed class ActiveMQListener : IListener
     {
         private readonly ITriggeredFunctionExecutor _triggeredFunctionExecutor;
-        private readonly ActiveMQTriggerContext _triggerContext;
+        private readonly Task<IConnection> _connectionTask;
+        private readonly string _queueName;
+        private readonly ActiveMQConnectionFactory _connectionFactory;
         private readonly ILogger _logger;
         private CancellationTokenSource _cts;
         private SingleItemFunctionExecutor _functionExecutor;
 
         public ActiveMQListener(
             ITriggeredFunctionExecutor triggeredFunctionExecutor,
-            ActiveMQTriggerContext triggerContext,
+            Task<IConnection> connectionTask,
+            string queueName,
+            ActiveMQConnectionFactory connectionFactory,
             ILogger logger)
         {
             _triggeredFunctionExecutor = triggeredFunctionExecutor;
-            _triggerContext = triggerContext;
+            _connectionTask = connectionTask;
+            _queueName = queueName;
+            _connectionFactory = connectionFactory;
             _logger = logger;
         }
 
@@ -39,51 +43,56 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
                 IsBackground = true
             };
 
-            _triggerContext.Connection.ExceptionListener += (ex) =>
+            var connection = (_connectionTask.Status == TaskStatus.RanToCompletion) ? _connectionTask.Result : (await _connectionTask);
+            connection.ExceptionListener += (ex) =>
             {
                 _logger.LogError(ex, "ActiveMQ Connection Exception");
             };
-            _triggerContext.Connection.ConnectionResumedListener += () =>
+            connection.ConnectionResumedListener += async () =>
             {
-                _logger.LogInformation("ActiveMQ Connection Resumed");
+                _logger.LogInformation("ActiveMQ Connection Resumed, re-starting listening loop");
 
-                _logger.LogInformation("Re-starting listening loop");
                 _cts = new CancellationTokenSource();
                 thread = new Thread(RunActiveMQListener)
                 {
                     IsBackground = true
                 };
-                thread.Start(_cts.Token);
+
+                var (sess, cons) = await _connectionFactory.CreateConsumer(connection, _queueName);
+
+                _functionExecutor = new SingleItemFunctionExecutor(_triggeredFunctionExecutor, _logger, sess);
+
+                _cts = new CancellationTokenSource();
+
+                thread.Start(new ListeningLoopData(cons, _cts.Token));
             };
-            _triggerContext.Connection.ConnectionInterruptedListener += () =>
+            connection.ConnectionInterruptedListener += () =>
             {
-                _logger.LogWarning("ActiveMQ Connection Interrupted");
-                _logger.LogInformation("Cancelling listening loop");
+                _logger.LogWarning("ActiveMQ Connection Interrupted, cancelling listening loop {HashCode}", this.GetHashCode());
 
                 _cts.Cancel();
                 _cts.Dispose();
+
+                _functionExecutor.Close(TimeSpan.FromMilliseconds(10 * 1000)).GetAwaiter().GetResult();
+                _functionExecutor.Dispose();
             };
 
-            var session = await _triggerContext.Connection.CreateSessionAsync(AcknowledgementMode.Transactional);
-
-            var queueName = _triggerContext.ActiveMQTriggerAttribute.ResolvedQueueName;
-            if (string.IsNullOrWhiteSpace(queueName))
+            if (string.IsNullOrWhiteSpace(_queueName))
             {
                 throw new InvalidOperationException("The name of the queue could not be found");
             }
 
-            var queue = (IQueue)SessionUtil.GetDestination(session, queueName, DestinationType.Queue);
-            var consumer = await session.CreateConsumerAsync(queue);
+            var (session, consumer) = await _connectionFactory.CreateConsumer(connection, _queueName);
 
             _functionExecutor = new SingleItemFunctionExecutor(_triggeredFunctionExecutor, _logger, session);
 
             _cts = new CancellationTokenSource();
-            thread.Start(new ListeningLoopData(queue, consumer, _cts.Token));
+            thread.Start(new ListeningLoopData(consumer, _cts.Token));
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Stoping ActiveMQ listener");
+            _logger.LogInformation("Stopping ActiveMQ listener");
 
             Cancel();
 
@@ -100,19 +109,23 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
             Cancel();
             _cts?.Dispose();
             _functionExecutor?.Dispose();
-            _triggerContext.Connection.Close();
-            _triggerContext.Connection.Dispose();
+
+            var connection = (_connectionTask.Status == TaskStatus.RanToCompletion)
+                ? _connectionTask.Result
+                : _connectionTask.GetAwaiter().GetResult();
+            connection.Close();
+            connection.Dispose();
         }
 
         private void RunActiveMQListener(object parameter)
         {
             var listeningData = (ListeningLoopData)parameter;
 
-            _logger.LogInformation("Start consuming queue '{QueueName}'", listeningData.Queue.QueueName);
+            _logger.LogInformation("Start consuming queue");
 
             while (!listeningData.CancellationToken.IsCancellationRequested)
             {
-                var message = (NmsTextMessage)listeningData.Consumer.Receive(TimeSpan.FromMilliseconds(500));
+                var message = listeningData.Consumer.Receive(TimeSpan.FromMilliseconds(500));
                 if (message == null)
                 {
                     continue;
@@ -129,12 +142,10 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
         private sealed class ListeningLoopData
         {
             public IMessageConsumer Consumer { get; }
-            public IQueue Queue { get; }
             public CancellationToken CancellationToken { get; }
 
-            public ListeningLoopData(IQueue queue, IMessageConsumer consumer, CancellationToken cancellationToken)
+            public ListeningLoopData(IMessageConsumer consumer, CancellationToken cancellationToken)
             {
-                Queue = queue;
                 Consumer = consumer;
                 CancellationToken = cancellationToken;
             }

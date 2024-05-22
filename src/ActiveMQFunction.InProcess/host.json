@@ -8,6 +8,6 @@
         },
         "enableLiveMetricsFilters": true
       },
-      "logLevel": {"default": "Debug"}
+      "logLevel": {"default": "Trace"}
     }
 }

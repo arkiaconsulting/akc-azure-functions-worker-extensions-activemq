@@ -1,77 +1,56 @@
-﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Binding;
-using Apache.NMS;
-using Apache.NMS.AMQP;
-using Apache.NMS.Policies;
+﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Bindings;
+using Akc.Azure.WebJobs.Extensions.ActiveMQ.Services;
+using Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers;
+using Apache.NMS.AMQP.Message;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Description;
+using Microsoft.Azure.WebJobs.Host.Bindings;
 using Microsoft.Azure.WebJobs.Host.Config;
 using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
 
 namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Config
 {
     [Extension("ActiveMQ")]
     internal class ActiveMQExtensionConfigProvider : IExtensionConfigProvider
     {
+        private readonly IConfiguration _configuration;
         private readonly INameResolver _nameResolver;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly ActiveMQConnectionFactory _connectionFactory;
+        private readonly IConverterManager _converterManager;
         private readonly ILogger _logger;
 
-        public ActiveMQExtensionConfigProvider(INameResolver nameResolver, ILoggerFactory loggerFactory)
+        public ActiveMQExtensionConfigProvider(IConfiguration configuration, INameResolver nameResolver, ILoggerFactory loggerFactory, ActiveMQConnectionFactory connectionFactory, IConverterManager converterManager)
         {
+            _configuration = configuration;
             _nameResolver = nameResolver;
+            _loggerFactory = loggerFactory;
+            _connectionFactory = connectionFactory;
+            _converterManager = converterManager;
             _logger = loggerFactory.CreateLogger(LogCategories.CreateTriggerCategory("ActiveMQ"));
         }
 
         public void Initialize(ExtensionConfigContext context)
         {
-            _logger.LogDebug("Initializing ActiveMQExtensionConfigProvider");
+            _logger.LogDebug("[ActiveMQExtensionConfigProvider] Initializing");
 
-            var triggerRule = context.AddBindingRule<ActiveMQTriggerAttribute>();
-            triggerRule.BindToTrigger(new ActiveMQListenerTriggerBindingProvider(this, _logger));
+            // Register trigger binding provider
+            context.AddBindingRule<ActiveMQTriggerAttribute>()
+                .AddOpenConverter<NmsTextMessage, OpenType.Poco>(typeof(TextMessageToPocoConverter<>))
+                .AddOpenConverter<NmsBytesMessage, OpenType.Poco>(typeof(BytesMessageToPocoConverter<>))
+                .AddConverter(new NmsTextMessageToStringConverter())
+                .BindToTrigger(new ActiveMQTriggerAttributeBindingProvider(_connectionFactory, _nameResolver, _converterManager, _configuration, _loggerFactory.CreateLogger("ActiveMQTriggerBinding")));
+
+            // Register binding provider
+            var bindingRule = context.AddBindingRule<ActiveMQAttribute>();
+            // In Isolated process context, the following converter is not supported, as the the type of the source is 'String'
+            bindingRule.AddConverter(new ActiveMQOutputMessageToMessageBuilderConverter(_logger));
+            bindingRule.AddConverter<string, MessageBuilder>(input => new MessageBuilder(input, _logger));
+            bindingRule.AddConverter<NmsTextMessage, MessageBuilder>(input => new MessageBuilder(input, _logger));
+            bindingRule.AddConverter<NmsBytesMessage, MessageBuilder>(input => new MessageBuilder(input, _logger));
+            bindingRule.BindToCollector<MessageBuilder>(typeof(ActiveMQAsyncCollectorAsyncConverter<>), _connectionFactory, _nameResolver, _loggerFactory.CreateLogger("ActiveMQOutputBinding"));
         }
-
-        public async Task<IConnection> CreateConnection(ActiveMQTriggerAttribute triggerAttribute)
-        {
-            _logger.LogDebug("Creating ActiveMQ connection");
-
-            var policy = new RedeliveryPolicy
-            {
-                BackOffMultiplier = 2,
-                InitialRedeliveryDelay = 10000,
-                MaximumRedeliveries = 10,
-                UseExponentialBackOff = true
-            };
-
-            var connectionUrl = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.Connection, nameof(triggerAttribute.Connection));
-            var userName = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.UserName, nameof(triggerAttribute.UserName));
-            var password = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.Password, nameof(triggerAttribute.Password));
-
-            var connectionFactory = new NmsConnectionFactory(CreateProviderUri(connectionUrl));
-            var connection = (NmsConnection)await connectionFactory.CreateConnectionAsync(userName, password);
-            connection.RedeliveryPolicy = policy;
-
-            triggerAttribute.ResolvedQueueName = SettingsUtility.ResolveString(_nameResolver, triggerAttribute.QueueName, nameof(triggerAttribute.QueueName));
-
-            try
-            {
-                _logger.LogDebug("Starting ActiveMQ connection");
-
-                await connection.StartAsync();
-
-                _logger.LogDebug("ActiveMQ connection started");
-            }
-            catch (System.Exception e)
-            {
-                _logger.LogError(e, "Could not start ActiveMQ connection");
-
-                throw;
-            }
-
-            return connection;
-        }
-
-        private static string CreateProviderUri(string connectionUrl) =>
-            $"failover:({connectionUrl})?transport.UseLogging=true&transport.startupMaxReconnectAttempts=1&transport.timeout=2000&transport.maxReconnectAttempts=0&failover.maxReconnectAttempts=-1&failover.initialReconnectDelay=1000&failover.reconnectDelay=5000";
     }
 }

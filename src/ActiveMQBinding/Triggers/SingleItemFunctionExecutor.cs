@@ -1,5 +1,4 @@
 ﻿using Apache.NMS;
-using Apache.NMS.AMQP.Message;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Extensions.Logging;
 using System;
@@ -15,10 +14,10 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
         private readonly ISession _session;
-        private readonly Channel<NmsTextMessage[]> _channel;
+        private readonly Channel<IMessage[]> _channel;
         private readonly CancellationTokenSource _cts;
         private readonly SemaphoreSlim _readerFinished = new SemaphoreSlim(0, 1);
-        private readonly List<NmsTextMessage> _currentBatch = new List<NmsTextMessage>();
+        private readonly List<IMessage> _currentBatch = new List<IMessage>();
 
         public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, ILogger logger, ISession session)
         {
@@ -27,7 +26,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
             _session = session;
             _cts = new CancellationTokenSource();
 
-            _channel = Channel.CreateBounded<NmsTextMessage[]>(new BoundedChannelOptions(1)
+            _channel = Channel.CreateBounded<IMessage[]>(new BoundedChannelOptions(1)
             {
                 SingleReader = true,
                 SingleWriter = true,
@@ -53,7 +52,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
             });
         }
 
-        public void Add(NmsTextMessage message) => _currentBatch.Add(message);
+        public void Add(IMessage message) => _currentBatch.Add(message);
 
         public void Flush()
         {
@@ -95,7 +94,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
             _cts.Dispose();
         }
 
-        private async Task ReaderAsync(ChannelReader<NmsTextMessage[]> reader, CancellationToken cancellationToken, ILogger logger)
+        private async Task ReaderAsync(ChannelReader<IMessage[]> reader, CancellationToken cancellationToken, ILogger logger)
         {
             while (!cancellationToken.IsCancellationRequested && await reader.WaitToReadAsync(cancellationToken))
             {
@@ -115,7 +114,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
             logger.LogInformation("Exiting reader {ProcessName}", nameof(SingleItemFunctionExecutor));
         }
 
-        private async Task ProcessItems(NmsTextMessage[] messages, CancellationToken cancellationToken)
+        private async Task ProcessItems(IMessage[] messages, CancellationToken cancellationToken)
         {
             foreach (var message in messages)
             {

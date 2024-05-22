@@ -1,5 +1,6 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Extensions.Configuration;
 using System;
 
 namespace Akc.Azure.WebJobs.Extensions.ActiveMQ
@@ -24,6 +25,18 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ
             }
 
             return setting;
+        }
+
+        public static string ResolveConnectionStringOrSetting(IConfiguration configuration, string settingName)
+        {
+            var value = configuration.GetConnectionStringOrSetting(settingName);
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new InvalidOperationException($"The setting '{settingName}' is missing or empty");
+            }
+
+            return value;
         }
     }
 }

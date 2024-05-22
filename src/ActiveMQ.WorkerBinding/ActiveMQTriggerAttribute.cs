@@ -1,47 +1,36 @@
 ﻿using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
-using System;
 
 namespace Akc.Azure.Functions.Worker.Extensions.ActiveMQ
 {
     /// <summary>
     /// ActiveMQ trigger binding attribute
     /// </summary>
-    [AttributeUsage(AttributeTargets.Parameter)]
     public class ActiveMQTriggerAttribute : TriggerBindingAttribute
     {
         /// <summary>
-        /// Endpoint in the form 'amqp://localhost:5672' (%...% placeholder supported)
+        /// App setting name that contains the ActiveMQ endpoint
         /// </summary>
-        public string Connection { get; }
+        public string Connection { get; set; }
 
         /// <summary>
         /// The name of the queue to listen to (%...% placeholder supported)
         /// </summary>
-        public string QueueName { get; }
+        public string QueueName { get; private set; }
 
         /// <summary>
-        /// The username to use for authentication (%...% placeholder supported)
+        /// App setting name that contains the ActiveMQ username
         /// </summary>
-        public string UserName { get; }
+        public string UserName { get; set; }
 
         /// <summary>
-        /// The password to use for authentication (%...% placeholder supported)
+        /// App setting name that contains the ActiveMQ password
         /// </summary>
-        public string Password { get; }
+        public string Password { get; set; }
 
         /// <summary>
         /// Initializes a new <see cref="ActiveMQTriggerAttribute"/>.
         /// </summary>
-        /// <param name="connection">Endpoint in the form 'amqp://localhost:5672' (%...% placeholder supported)</param>
         /// <param name="queueName">The name of the queue to listen to (%...% placeholder supported)</param>
-        /// <param name="userName">The username to use for authentication (%...% placeholder supported)</param>
-        /// <param name="password">The password to use for authentication (%...% placeholder supported)</param>
-        public ActiveMQTriggerAttribute(string connection, string queueName, string userName, string password)
-        {
-            Connection = connection;
-            QueueName = queueName;
-            UserName = userName;
-            Password = password;
-        }
+        public ActiveMQTriggerAttribute(string queueName) => QueueName = queueName;
     }
 }
