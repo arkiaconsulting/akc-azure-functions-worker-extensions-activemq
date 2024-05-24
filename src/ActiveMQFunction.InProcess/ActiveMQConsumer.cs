@@ -1,5 +1,4 @@
 ﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ;
-using Akc.Azure.WebJobs.Extensions.ActiveMQ.Shared;
 using Apache.NMS.AMQP.Message;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;

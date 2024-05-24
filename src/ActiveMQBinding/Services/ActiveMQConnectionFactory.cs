@@ -1,10 +1,14 @@
-﻿using Apache.NMS;
+﻿using Akc.Azure.WebJobs.Extensions.ActiveMQ.Config;
+using Apache.NMS;
 using Apache.NMS.AMQP;
 using Apache.NMS.Policies;
 using Apache.NMS.Util;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
@@ -12,6 +16,10 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
     internal sealed class ActiveMQConnectionFactory : IDisposable
     {
         private readonly ConcurrentDictionary<ConnectionOptions, Task<IConnection>> _connectionCache = new ConcurrentDictionary<ConnectionOptions, Task<IConnection>>();
+        private readonly ActiveMQOptions _options;
+
+        public ActiveMQConnectionFactory(IOptions<ActiveMQOptions> options) =>
+            _options = options.Value;
 
         public Task<IConnection> GetConnection(ConnectionOptions connectionOptions) =>
             _connectionCache.GetOrAdd(connectionOptions, CreateConnectionAsync);
@@ -26,7 +34,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
                 UseExponentialBackOff = true
             };
 
-            var connectionFactory = new NmsConnectionFactory(CreateProviderUri(connectionOptions.Endpoint));
+            var connectionFactory = new NmsConnectionFactory(CreateProviderUri(connectionOptions.Endpoint, _options));
             var connection = (NmsConnection)await connectionFactory.CreateConnectionAsync(connectionOptions.UserName, connectionOptions.Password);
             connection.RedeliveryPolicy = policy;
 
@@ -44,8 +52,26 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
             return (session, await session.CreateConsumerAsync(queue));
         }
 
-        private static string CreateProviderUri(string endpoint) =>
-            $"failover:({endpoint})?transport.UseLogging=true&transport.startupMaxReconnectAttempts=1&transport.timeout=2000&transport.maxReconnectAttempts=0&failover.maxReconnectAttempts=-1&failover.initialReconnectDelay=1000&failover.reconnectDelay=5000";
+        private static string CreateProviderUri(string endpoint, ActiveMQOptions options)
+        {
+            var connectionStringBuilder = new StringBuilder($"failover:({endpoint})?");
+            var parametersDictionary = new Dictionary<string, string>
+            {
+                { "transport.UseLogging", "false" },
+                { "transport.startupMaxReconnectAttempts", options.TransportStartupMaxReconnectAttempts.ToString() },
+                { "transport.timeout", options.TransportTimeout.ToString() },
+                { "transport.maxReconnectAttempts", "0" },
+                { "failover.maxReconnectAttempts", "-1" },
+                { "failover.initialReconnectDelay", "1000" },
+                { "failover.reconnectDelay", "5000" }
+            };
+
+            var queryParameters = string.Join("&", parametersDictionary.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+
+            connectionStringBuilder.Append(queryParameters);
+
+            return connectionStringBuilder.ToString();
+        }
 
         public void Dispose()
         {
