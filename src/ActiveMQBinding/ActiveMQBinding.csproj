@@ -23,10 +23,12 @@
 		<RepositoryUrl>https://github.com/arkiaconsulting/akc-azure-functions-worker-extensions-activemq</RepositoryUrl>
 		<PackageProjectUrl>https://github.com/arkiaconsulting/akc-azure-functions-worker-extensions-activemq</PackageProjectUrl>
 		<PackageTags>Azure WebJobs AzureFunctions ActiveMQ Akc</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageIconUrl>https://aka.ms/azure-functions-package-icon</PackageIconUrl>
 
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
-		<DebugType>embedded</DebugType>
 
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -40,4 +42,11 @@
 		<PackageReference Include="System.Threading.Channels" Version="6.0.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+		<None Include=".\icon.png" Pack="true" PackagePath="/">
+			<Visible>false</Visible>
+		</None>
+	</ItemGroup>
+	
 </Project>
