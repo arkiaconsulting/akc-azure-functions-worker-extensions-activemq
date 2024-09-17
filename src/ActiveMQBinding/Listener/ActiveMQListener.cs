@@ -68,7 +68,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
             };
             connection.ConnectionInterruptedListener += () =>
             {
-                _logger.LogWarning("ActiveMQ Connection Interrupted, cancelling listening loop {HashCode}", this.GetHashCode());
+                _logger.LogWarning("ActiveMQ Connection Interrupted, cancelling listening loop");
 
                 _cts.Cancel();
                 _cts.Dispose();
