@@ -3,6 +3,7 @@ using Apache.NMS;
 using Apache.NMS.AMQP;
 using Apache.NMS.Policies;
 using Apache.NMS.Util;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Concurrent;
@@ -17,21 +18,27 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
     {
         private readonly ConcurrentDictionary<ConnectionOptions, Task<IConnection>> _connectionCache = new ConcurrentDictionary<ConnectionOptions, Task<IConnection>>();
         private readonly ActiveMQOptions _options;
+        private readonly ILogger _logger;
 
-        public ActiveMQConnectionFactory(IOptions<ActiveMQOptions> options) =>
+        public ActiveMQConnectionFactory(IOptions<ActiveMQOptions> options, ILogger<ActiveMQConnectionFactory> logger)
+        {
             _options = options.Value;
+            _logger = logger;
+        }
 
         public Task<IConnection> GetConnection(ConnectionOptions connectionOptions) =>
             _connectionCache.GetOrAdd(connectionOptions, CreateConnectionAsync);
 
         private async Task<IConnection> CreateConnectionAsync(ConnectionOptions connectionOptions)
         {
+            _logger.LogDebug("[ActiveMQConnectionFactory] Creating connection");
+
             var policy = new RedeliveryPolicy
             {
                 BackOffMultiplier = 2,
                 InitialRedeliveryDelay = 10000,
                 MaximumRedeliveries = 10,
-                UseExponentialBackOff = true
+                UseExponentialBackOff = true,
             };
 
             var connectionFactory = new NmsConnectionFactory(CreateProviderUri(connectionOptions.Endpoint, _options));
@@ -40,16 +47,26 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
 
             await connection.StartAsync();
 
+            _logger.LogDebug("[ActiveMQConnectionFactory] Connection started {ConnectionId}", connection.Id);
+
             return connection;
         }
 
         public async Task<(ISession, IMessageConsumer)> CreateConsumer(IConnection connection, string queueName)
         {
-            var session = await connection.CreateSessionAsync(AcknowledgementMode.Transactional);
+            _logger.LogDebug("[ActiveMQConnectionFactory] Creating consumer");
+
+            var session = await connection.CreateSessionAsync(AcknowledgementMode.ClientAcknowledge);
+
+            _logger.LogDebug("[ActiveMQConnectionFactory] Session created {SessionId}", ((NmsSession)session).SessionInfo.Id);
 
             var queue = (IQueue)SessionUtil.GetDestination(session, queueName, DestinationType.Queue);
 
-            return (session, await session.CreateConsumerAsync(queue));
+            var consumer = await session.CreateConsumerAsync(queue);
+
+            _logger.LogDebug("[ActiveMQConnectionFactory] Consumer created {ConsumerId}", ((NmsMessageConsumer)consumer).Info.Id);
+
+            return (session, consumer);
         }
 
         private static string CreateProviderUri(string endpoint, ActiveMQOptions options)
@@ -63,7 +80,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
                 { "transport.maxReconnectAttempts", "0" },
                 { "failover.maxReconnectAttempts", "-1" },
                 { "failover.initialReconnectDelay", "1000" },
-                { "failover.reconnectDelay", "5000" }
+                { "failover.reconnectDelay", "5000" },
             };
 
             var queryParameters = string.Join("&", parametersDictionary.Select(kvp => $"{kvp.Key}={kvp.Value}"));
@@ -85,6 +102,10 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
                 catch (Exception)
                 {
                     // empty
+                }
+                finally
+                {
+                    _logger.LogDebug("[ActiveMQConnectionFactory] Connection disposed {ConnectionId}", ((NmsConnection)connection).Id);
                 }
             }
 

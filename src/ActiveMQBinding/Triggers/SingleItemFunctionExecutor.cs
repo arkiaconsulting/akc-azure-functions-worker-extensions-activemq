@@ -123,23 +123,14 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
                     TriggerValue = message,
                 };
 
-                try
+                var result = await _executor.TryExecuteAsync(triggerData, cancellationToken);
+
+                if (!result.Succeeded)
                 {
-                    var result = await _executor.TryExecuteAsync(triggerData, cancellationToken);
-
-                    if (!result.Succeeded)
-                    {
-                        _logger.LogError(result.Exception, "Function execution failed");
-                    }
-
-                    await _session.CommitAsync();
+                    _logger.LogError(result.Exception, "Function execution failed");
                 }
-                catch (Exception)
-                {
-                    await _session.RollbackAsync();
 
-                    throw;
-                }
+                await message.AcknowledgeAsync();
             }
         }
     }
