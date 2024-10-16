@@ -64,7 +64,7 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Bindings
 
             using (var session = await _connection.CreateSessionAsync(AcknowledgementMode.AutoAcknowledge))
             {
-                var destination = session.GetQueue(_queueName);
+                var destination = await session.GetQueueAsync(_queueName);
                 using (var producer = await session.CreateProducerAsync(destination))
                 {
                     var message = await messageBuilder.Build(producer);

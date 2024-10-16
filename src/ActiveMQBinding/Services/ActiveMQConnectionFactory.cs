@@ -57,10 +57,10 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Services
             _logger.LogDebug("[ActiveMQConnectionFactory] Creating consumer");
 
             var session = await connection.CreateSessionAsync(AcknowledgementMode.ClientAcknowledge);
-
+            
             _logger.LogDebug("[ActiveMQConnectionFactory] Session created {SessionId}", ((NmsSession)session).SessionInfo.Id);
 
-            var queue = (IQueue)SessionUtil.GetDestination(session, queueName, DestinationType.Queue);
+            var queue = SessionUtil.GetDestination(session, queueName, DestinationType.Queue);
 
             var consumer = await session.CreateConsumerAsync(queue);
 
