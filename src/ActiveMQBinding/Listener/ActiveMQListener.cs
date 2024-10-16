@@ -19,6 +19,8 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
         private readonly ILogger _logger;
         private CancellationTokenSource _cts;
         private SingleItemFunctionExecutor _functionExecutor;
+        private ISession _session;
+        private IMessageConsumer _consumer; 
 
         public ActiveMQListener(
             ITriggeredFunctionExecutor triggeredFunctionExecutor,
@@ -58,13 +60,13 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
                     IsBackground = true
                 };
 
-                var (sess, cons) = await _connectionFactory.CreateConsumer(connection, _queueName);
+                (_session, _consumer) = await _connectionFactory.CreateConsumer(connection, _queueName);
 
-                _functionExecutor = new SingleItemFunctionExecutor(_triggeredFunctionExecutor, _logger, sess);
+                _functionExecutor = new SingleItemFunctionExecutor(_triggeredFunctionExecutor, _logger);
 
                 _cts = new CancellationTokenSource();
 
-                thread.Start(new ListeningLoopData(cons, _cts.Token));
+                thread.Start(new ListeningLoopData(_consumer, _cts.Token));
             };
             connection.ConnectionInterruptedListener += () =>
             {
@@ -72,6 +74,12 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
 
                 _cts.Cancel();
                 _cts.Dispose();
+
+                _consumer.Close();
+                _consumer.Dispose();
+
+                _session.Close();
+                _session.Dispose();
 
                 _functionExecutor.Close(TimeSpan.FromMilliseconds(10 * 1000)).GetAwaiter().GetResult();
                 _functionExecutor.Dispose();
@@ -82,12 +90,12 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
                 throw new InvalidOperationException("The name of the queue could not be found");
             }
 
-            var (session, consumer) = await _connectionFactory.CreateConsumer(connection, _queueName);
+            (_session, _consumer) = await _connectionFactory.CreateConsumer(connection, _queueName);
 
-            _functionExecutor = new SingleItemFunctionExecutor(_triggeredFunctionExecutor, _logger, session);
+            _functionExecutor = new SingleItemFunctionExecutor(_triggeredFunctionExecutor, _logger);
 
             _cts = new CancellationTokenSource();
-            thread.Start(new ListeningLoopData(consumer, _cts.Token));
+            thread.Start(new ListeningLoopData(_consumer, _cts.Token));
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -108,6 +116,13 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Listener
 
             Cancel();
             _cts?.Dispose();
+
+            _consumer.Close();
+            _consumer.Dispose();
+
+            _session.Close();
+            _session.Dispose();
+
             _functionExecutor?.Dispose();
 
             var connection = (_connectionTask.Status == TaskStatus.RanToCompletion)

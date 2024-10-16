@@ -13,17 +13,15 @@ namespace Akc.Azure.WebJobs.Extensions.ActiveMQ.Triggers
     {
         private readonly ITriggeredFunctionExecutor _executor;
         private readonly ILogger _logger;
-        private readonly ISession _session;
         private readonly Channel<IMessage[]> _channel;
         private readonly CancellationTokenSource _cts;
         private readonly SemaphoreSlim _readerFinished = new SemaphoreSlim(0, 1);
         private readonly List<IMessage> _currentBatch = new List<IMessage>();
 
-        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, ILogger logger, ISession session)
+        public SingleItemFunctionExecutor(ITriggeredFunctionExecutor executor, ILogger logger)
         {
             _executor = executor;
             _logger = logger;
-            _session = session;
             _cts = new CancellationTokenSource();
 
             _channel = Channel.CreateBounded<IMessage[]>(new BoundedChannelOptions(1)
